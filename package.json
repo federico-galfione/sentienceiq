@@ -1,0 +1,12 @@
+{
+    "private": true,
+    "workspaces": ["frontend", "backend"],
+    "scripts": {
+        "frontend:dev": "cd frontend && npm run dev",
+        "backend:dev": "cd backend && npm run start:dev",
+        "docker:up": "docker compose up --build",
+        "docker:down": "docker compose down -v",
+        "docker:prod:up": "docker compose -f docker-compose.prod.yml up --build -d",
+        "docker:prod:down": "docker compose -f docker-compose.prod.yml down -v"
+    }
+}

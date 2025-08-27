@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: prod-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: supersecret
+      MONGO_DB_NAME: mydb
+      MONGO_APP_USER: appuser
+      MONGO_APP_PASS: apppass
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: prod-backend
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://appuser:apppass@mongo:27017/mydb?authSource=admin
+      PORT: 3001
+      SWAGGER_ENABLED: "true"
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: prod-frontend
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NUXT_PUBLIC_API_BASE: "/api"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
